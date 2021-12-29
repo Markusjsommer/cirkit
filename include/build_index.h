@@ -49,8 +49,8 @@ private:
                            std::string>> _gtf_data;
 
     // nucleotide sequence from both strands
-    std::vector<std::string> _gtf_seq_forward;
-    std::vector<std::string> _gtf_seq_forwardcomplement;
+//    std::vector<std::string> _gtf_feature_5prime3prime;
+    std::vector<std::string> _gtf_feature_5prime3prime;
 
     // hash table
     using MapType = std::unordered_map<std::string, std::vector<uint64_t>>;
