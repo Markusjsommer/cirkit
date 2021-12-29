@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/tmp/tmp.fbBXt0ZQ6K/include/BitsetManager.cpp
+BitsetManager.h
+/tmp/tmp.fbBXt0ZQ6K/include/BitsetManager.h
+
+/tmp/tmp.fbBXt0ZQ6K/include/BitsetManager.h
+bitset
+-
+tuple
+-
+vector
+-
+
