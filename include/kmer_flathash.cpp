@@ -6,7 +6,7 @@
 #include "kmer_flathash.h"
 
 
-void kmer_flathash::load(std::string path) {
+void kmer_flathash::load(const std::string& path) {
     std::ifstream is(path, std::ios::binary);
     cereal::BinaryInputArchive archive_in(is);
     size_t table_size;

@@ -35,7 +35,7 @@ public:
     kmer_flathash() = default;
     ~kmer_flathash() = default;
 
-    void load(std::string path);
+    void load(const std::string& path);
 
     bool query(const std::string& kmer, std::vector<uint64_t> &table_value);
     int _k;

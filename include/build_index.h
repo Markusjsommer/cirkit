@@ -24,7 +24,7 @@ public:
     void read_ref(std::string &gtf, std::string &ref);
     void extract_features(const std::string& feature, bool noalt);
     void build(int k, int m);
-    void serialize_table(std::string path_out);
+    void serialize_table(const std::string &path_out);
 
 private:
     static void complement(std::string &s, std::string &comp);
@@ -49,7 +49,6 @@ private:
                            std::string>> _gtf_data;
 
     // nucleotide sequence from both strands
-//    std::vector<std::string> _gtf_feature_5prime3prime;
     std::vector<std::string> _gtf_feature_5prime3prime;
 
     // hash table
@@ -58,8 +57,6 @@ private:
 
 private:
     BitsetManager bm;
-
-
 
 };
 

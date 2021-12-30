@@ -357,9 +357,8 @@ void build_index::build(int k, int m) {
 //    printf("%s: %.3fs\n", name, (int)elapsed / 1000.0f);
 //}
 
-void build_index::serialize_table(std::string path_out) {
+void build_index::serialize_table(const std::string& path_out) {
     std::cout << "Saving index to " << path_out << std::endl;
-
 
     size_t s = _table.size();
     std::cout << s << " unique kmers" << std::endl;
@@ -367,7 +366,7 @@ void build_index::serialize_table(std::string path_out) {
 //    showtime("build hash", [this, path_out]() {
     std::ofstream os(path_out, std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
-
+//}
     archive(_k);
     archive(s);
     archive(_table);
@@ -389,8 +388,9 @@ void build_index::complement(std::string &s, std::string &comp) {
         } else if (ch == 'C'){
             c += 'G';
         } else{
-            c += ch; // just preserve non-ATGC nucleotides, they don't really matter
+            c += ch; // just preserve non-ATGC nucleotides for now
         }
+        // TODO nonstandard nucleotide table
     }
     comp = c;
 }
