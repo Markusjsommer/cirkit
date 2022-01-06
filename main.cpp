@@ -157,8 +157,13 @@ int main(int argc, char* argv[]) {
     std::string kmer_m1_rc;
     std::string kmer_m2_rc;
 
-
     BitsetManager bm;
+
+    size_t n_mapped_linear = 0;
+    size_t n_mapped_circular = 0;
+    size_t n_unmapped = 0;
+    size_t n_mapped_exactloc_FOOOO = 0; //TODO is this more than expected?
+
     for (size_t i=0; i < seq_vec_r1.size(); ++i){
 //        std::cout << i+1 << " of "  << seq_vec_r1.size() << std::endl;
 
@@ -179,6 +184,8 @@ int main(int argc, char* argv[]) {
         // don't use unplaced contigs
         // mask repetitive regions (still a problem in exons only?)
         // more than 1 read spanning same bsj
+        // insert size of circRNA should appear relatively large
+
 
 
         bool decided = false;
@@ -196,6 +203,12 @@ int main(int argc, char* argv[]) {
         bool in_table_m1_rc;
         bool in_table_m2;
         bool in_table_m2_rc;
+
+        bool mapped_strand_m1;
+        bool mapped_strand_m2;
+        size_t mapped_loc_m;
+        size_t mapped_loc_m_rc;
+        std::string mapped_name;
 
         std::vector<uint64_t> table_value;
         while (not decided){
@@ -282,7 +295,6 @@ int main(int argc, char* argv[]) {
 
             }
 
-
             // check if any kmer mappings overlap on geneID
             // m1 with m2_rc
             if ((not genevec_mapping_m1.empty()) and (not genevec_mapping_m2_rc.empty())){
@@ -294,19 +306,26 @@ int main(int argc, char* argv[]) {
 
                     auto it_m2_rc = std::find_if(genevec_mapping_m2_rc.begin(),  genevec_mapping_m2_rc.end(), [it_m1](std::tuple<uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1); });
 
-////                    if (std::get<1>(*it_m1) != 1 or std::get<1>(*it_m2_rc) != 1) {
-//                        std::cout << table.geneID_array[std::get<0>(*it_m1)] << std::endl;
-//                        std::cout << std::get<1>(*it_m1) << std::endl;
-//                        std::cout << std::get<2>(*it_m1) << std::endl;
-//                        std::cout << table.geneID_array[std::get<0>(*it_m2_rc)] << std::endl;
-//                        std::cout << std::get<1>(*it_m2_rc) << std::endl;
-//                        std::cout << std::get<2>(*it_m2_rc) << std::endl;
-//                        std::cout << std::endl;
-////                    }
+                    std::cout << table.geneID_array[std::get<0>(*it_m1)] << std::endl;
+                    std::cout << std::get<1>(*it_m1) << std::endl;
+                    std::cout << std::get<2>(*it_m1) << std::endl;
+                    std::cout << table.geneID_array[std::get<0>(*it_m2_rc)] << std::endl;
+                    std::cout << std::get<1>(*it_m2_rc) << std::endl;
+                    std::cout << std::get<2>(*it_m2_rc) << std::endl;
+                    std::cout << std::endl;
 
-                    mapped = true;
-                    decided = true;
-                    continue; // skip final position check to avoid false-false-mappings
+
+                    mapped_strand_m1 = std::get<1>(*it_m1);
+                    mapped_strand_m2 = std::get<1>(*it_m2_rc);
+                    // ensure both hits map to same stranded feature
+                    if (mapped_strand_m1 == mapped_strand_m2){
+                        mapped = true;
+                        decided = true;
+                        mapped_loc_m = std::get<2>(*it_m1);
+                        mapped_loc_m_rc = std::get<2>(*it_m2_rc);
+                        mapped_name = table.geneID_array[std::get<0>(*it_m1)];
+                        continue; // skip final position check to avoid false-false-mappings
+                    }
                 }
             }
 
@@ -316,20 +335,30 @@ int main(int argc, char* argv[]) {
                                                  genevec_mapping_m2.begin(), genevec_mapping_m2.end(),
                                                  compare_genevec{});
                 if (it_m1_rc != genevec_mapping_m1_rc.end()){
-                    std::cout << table.geneID_array[std::get<0>(*it_m1_rc)] << std::endl;
-                    std::cout << std::get<1>(*it_m1_rc) << std::endl;
-                    std::cout << std::get<2>(*it_m1_rc) << std::endl;
+
 
                     auto it_m2 = std::find_if(genevec_mapping_m2.begin(),  genevec_mapping_m2.end(), [it_m1_rc](std::tuple<uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1_rc); });
 
-                    std::cout << table.geneID_array[std::get<0>(*it_m2)] << std::endl;
-                    std::cout << std::get<1>(*it_m2) << std::endl;
-                    std::cout << std::get<2>(*it_m2) << std::endl;
-                    std::cout << std::endl;
 
-                    mapped = true;
-                    decided = true;
-                    continue; // skip final position check to avoid false-false-mappings
+//                    std::cout << table.geneID_array[std::get<0>(*it_m1_rc)] << std::endl;
+//                    std::cout << std::get<1>(*it_m1_rc) << std::endl;
+//                    std::cout << std::get<2>(*it_m1_rc) << std::endl;
+//                    std::cout << table.geneID_array[std::get<0>(*it_m2)] << std::endl;
+//                    std::cout << std::get<1>(*it_m2) << std::endl;
+//                    std::cout << std::get<2>(*it_m2) << std::endl;
+//                    std::cout << std::endl;
+
+                    mapped_strand_m1 = std::get<1>(*it_m1_rc);
+                    mapped_strand_m2 = std::get<1>(*it_m2);
+                    // ensure both hits map to same stranded feature
+                    if (mapped_strand_m1 == mapped_strand_m2){
+                        mapped = true;
+                        decided = true;
+                        mapped_loc_m = std::get<2>(*it_m2);
+                        mapped_loc_m_rc = std::get<2>(*it_m1_rc);
+                        mapped_name = table.geneID_array[std::get<0>(*it_m1_rc)]; // both necessarily map to same name
+                        continue; // skip final position check to avoid false-false-mappings
+                    }
                 }
             }
 
@@ -349,25 +378,40 @@ int main(int argc, char* argv[]) {
         // linear has the reverse complement match closer to 3'
         // circ has the reverse complement match closer to 5'
         if (mapped) {
-
-
-
-
-
-
-
-
-
-
+            if (mapped_strand_m1){
+                // check for linear rna
+                if (mapped_loc_m < mapped_loc_m_rc){
+                    ++ n_mapped_linear;
+                // check for putative circular RNA
+                } else if (mapped_loc_m > mapped_loc_m_rc){
+                    ++ n_mapped_circular;
+                } else{
+                    ++n_mapped_exactloc_FOOOO; // TODO remove
+                }
+            } else{
+                // check for linear rna
+                if (mapped_loc_m > mapped_loc_m_rc){
+                    ++ n_mapped_linear;
+                    // check for putative circular RNA
+                } else if (mapped_loc_m < mapped_loc_m_rc){
+                    ++ n_mapped_circular;
+                } else{
+                    ++n_mapped_exactloc_FOOOO; // TODO remove
+                }
+            }
+        } else {
+            ++ n_unmapped;
         }
-
 
     }
 
+    std::cout << "n_mapped_linear: " << n_mapped_linear << std::endl;
+    std::cout << "n_mapped_circular: " << n_mapped_circular << std::endl;
+    std::cout << "n_mapped_exactloc_FOOOO: " << n_mapped_exactloc_FOOOO << std::endl;
+    std::cout << "n_unmapped: " << n_unmapped << std::endl;
 
-
-
-
+    std::cout << n_mapped_linear + n_mapped_circular + n_unmapped + n_mapped_exactloc_FOOOO << std::endl;
+    std::cout << seq_vec_r1.size() << std::endl;
 
     return 0;
 }
