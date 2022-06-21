@@ -1,4 +1,4 @@
-/home/markus/cmake/cmake-3.16.6-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-8/root/usr/bin/g++ -G "CodeBlocks - Unix Makefiles" /tmp/tmp.fbBXt0ZQ6K
+/home/markus/cmake/cmake-3.16.6-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-8/root/usr/bin/g++ -G "CodeBlocks - Unix Makefiles" /tmp/tmp.SEBJEAnaQR
 -- The C compiler identification is GNU 10.3.0
 -- The CXX compiler identification is GNU 8.3.1
 -- Check for working C compiler: /ccb/sw/gcc10/bin/gcc
@@ -16,4 +16,4 @@
 -- Found ZLIB: /usr/lib64/libz.so (found version "1.2.7") 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /tmp/tmp.fbBXt0ZQ6K/cmake-build-release
+-- Build files have been written to: /tmp/tmp.SEBJEAnaQR/cmake-build-release

@@ -306,13 +306,13 @@ int main(int argc, char* argv[]) {
 
                     auto it_m2_rc = std::find_if(genevec_mapping_m2_rc.begin(),  genevec_mapping_m2_rc.end(), [it_m1](std::tuple<uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1); });
 
-                    std::cout << table.geneID_array[std::get<0>(*it_m1)] << std::endl;
-                    std::cout << std::get<1>(*it_m1) << std::endl;
-                    std::cout << std::get<2>(*it_m1) << std::endl;
-                    std::cout << table.geneID_array[std::get<0>(*it_m2_rc)] << std::endl;
-                    std::cout << std::get<1>(*it_m2_rc) << std::endl;
-                    std::cout << std::get<2>(*it_m2_rc) << std::endl;
-                    std::cout << std::endl;
+//                    std::cout << table.geneID_array[std::get<0>(*it_m1)] << std::endl;
+//                    std::cout << std::get<1>(*it_m1) << std::endl;
+//                    std::cout << std::get<2>(*it_m1) << std::endl;
+//                    std::cout << table.geneID_array[std::get<0>(*it_m2_rc)] << std::endl;
+//                    std::cout << std::get<1>(*it_m2_rc) << std::endl;
+//                    std::cout << std::get<2>(*it_m2_rc) << std::endl;
+//                    std::cout << std::endl;
 
 
                     mapped_strand_m1 = std::get<1>(*it_m1);

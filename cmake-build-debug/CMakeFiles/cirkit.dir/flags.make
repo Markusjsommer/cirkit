@@ -6,5 +6,5 @@ CXX_FLAGS =  -fopenmp -g   -std=gnu++14
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/tmp/tmp.fbBXt0ZQ6K/include -I/tmp/tmp.fbBXt0ZQ6K/include/parallel_hashmap -I/tmp/tmp.fbBXt0ZQ6K/include/cereal 
+CXX_INCLUDES = -I/tmp/tmp.SEBJEAnaQR/include -I/tmp/tmp.SEBJEAnaQR/include/parallel_hashmap -I/tmp/tmp.SEBJEAnaQR/include/cereal 
 
