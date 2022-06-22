@@ -39,25 +39,24 @@ void complement(std::string &s, std::string &comp) {
 
 int main(int argc, char* argv[]) {
     // parse command line options
-    cxxopts::Options options("circuit", "Fast, conservative, reference-guided circRNA identification");
+    cxxopts::Options options("cirkit", "Fast, conservative, reference-guided circRNA identification");
     options.add_options()
             ("1, reads-1", "Path to input fasta for paired end mate 1", cxxopts::value<std::string>())
             ("2, reads-2", "Path to input fasta for paired end mate 2", cxxopts::value<std::string>())
             ("o, out", "Path to output circRNA", cxxopts::value<std::string>())
             ("index", "Path of kmer index", cxxopts::value<std::string>())
 
-
             ("build", "Build index from GTF and reference fasta, requires --gtf, --ref, and --index", cxxopts::value<bool>()->default_value("false"))
             ("gtf", "Path to GTF with transcript annotation", cxxopts::value<std::string>())
             ("ref", "Path to reference fasta for building index", cxxopts::value<std::string>())
             ("feature", "Feature name in GTF where circRNAs should be found, e.g. CDS, locus, transcript, exon; preprocessing an annotation with gffread -M may help discard intergenic regions and redundant transcripts", cxxopts::value<std::string>()->default_value("CDS"))
-            ("no-alt", R"(Filter out alternate scaffolds from reference (really just removes any contigs with names "_" or "alt"))", cxxopts::value<bool>()->default_value("false"))
+            ("no-alt", R"(Filter out alternate scaffolds from reference (really just removes any contigs with "alt" in the name))", cxxopts::value<bool>()->default_value("false"))
             ("k", "nucleotide kmer length", cxxopts::value<int>()->default_value("25"))
 
 //            ("k", "nucleotide kmer length", cxxopts::value<int>()->default_value("35")) // TODO minimizers
 //            ("l", "minimizer length", cxxopts::value<int>()->default_value("31"))
             ("m, max-mappers", "maximum number of kmer locations to save in index, lower number can stop degenerate sequence from being too much of a problem", cxxopts::value<int>()->default_value("10"))
-            ("h, help", "Print circuit usage")
+            ("h, help", "Print cirkit usage")
             ;
 
     auto result = options.parse(argc, argv);

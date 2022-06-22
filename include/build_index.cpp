@@ -150,6 +150,7 @@ void build_index::extract_features(const std::string& feature, bool noalt) {
     // split gtf lines on tabs
     // gtf format
     // 0: contig, 1: source, 2: feature, 3: start, 4: end, 5: score, 6: strand, 7: frame, 8: geneID
+
     for (auto & l : _gtf_lines){
         std::istringstream ss(l);
         std::string substring;
@@ -196,9 +197,9 @@ void build_index::extract_features(const std::string& feature, bool noalt) {
             contig = std::get<0>(row_tuple);
             if (contig.find("alt") != std::string::npos){
                 alt = true;
-            } else if (contig.find('_') != std::string::npos) {
-                alt = true;
-            }
+            } //else if (contig.find('_') != std::string::npos) {
+              //  alt = true;
+            //}
             if (alt){
                 continue;
             }

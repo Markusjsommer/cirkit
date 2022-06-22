@@ -38,7 +38,9 @@ int FastaReader::read_fasta(const std::string &filepath_in, std::vector<std::str
                     line.pop_back();
                 }
                 if (line[0] == '>') {
-                    line = line.substr(1, line.size() - 1); // remove ">" from contig name
+                    size_t firstspace = line.find(' ');// discard anything after first space in contig name
+                    //line = line.substr(1, line.size() - 1); // remove ">" from contig name
+                    line = line.substr(1, firstspace - 1); // remove ">" from contig name
                     seq_vec.emplace_back(std::string());
                     contigname_vec.emplace_back(line);
 
@@ -55,7 +57,9 @@ int FastaReader::read_fasta(const std::string &filepath_in, std::vector<std::str
                     line.pop_back();
                 }
                 if (line[0] == '>') {
-                    line = line.substr(1, line.size() - 1); // remove ">" from contig name
+                    size_t firstspace = line.find(' ');// discard anything after first space in contig name
+                    //line = line.substr(1, line.size() - 1); // remove ">" from contig name
+                    line = line.substr(1, firstspace - 1); // remove ">" from contig name
                     seq_vec.emplace_back(std::string());
                     contigname_vec.emplace_back(line);
 
