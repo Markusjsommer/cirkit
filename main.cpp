@@ -43,14 +43,14 @@ int main(int argc, char* argv[]) {
     options.add_options()
             ("1, reads-1", "Path to input fasta for paired end mate 1", cxxopts::value<std::string>())
             ("2, reads-2", "Path to input fasta for paired end mate 2", cxxopts::value<std::string>())
-            ("o, out", "Path to output circRNA", cxxopts::value<std::string>())
+            ("o, out", "Path to directory to output circRNA info", cxxopts::value<std::string>())
             ("index", "Path of kmer index", cxxopts::value<std::string>())
 
             ("build", "Build index from GTF and reference fasta, requires --gtf, --ref, and --index", cxxopts::value<bool>()->default_value("false"))
             ("gtf", "Path to GTF with transcript annotation", cxxopts::value<std::string>())
             ("ref", "Path to reference fasta for building index", cxxopts::value<std::string>())
             ("feature", "Feature name in GTF where circRNAs should be found, e.g. CDS, locus, transcript, exon; preprocessing an annotation with gffread -M may help discard intergenic regions and redundant transcripts", cxxopts::value<std::string>()->default_value("CDS"))
-            ("no-alt", R"(Filter out alternate scaffolds from reference (really just removes any contigs with "alt" in the name))", cxxopts::value<bool>()->default_value("false"))
+            ("no-alt", R"(Filter out alternate scaffolds from reference (really just removes any contigs with "alt" or "fix" in the name))", cxxopts::value<bool>()->default_value("false"))
             ("k", "nucleotide kmer length", cxxopts::value<int>()->default_value("25"))
 
 //            ("k", "nucleotide kmer length", cxxopts::value<int>()->default_value("35")) // TODO minimizers
@@ -162,6 +162,8 @@ int main(int argc, char* argv[]) {
     size_t n_mapped_circular = 0;
     size_t n_unmapped = 0;
     size_t n_mapped_exactloc_FOOOO = 0; //TODO is this more than expected?
+    std::vector<std::tuple<std::string, size_t, size_t, bool>> pair_map_info_circ_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
+    std::vector<std::tuple<std::string, size_t, size_t, bool>> pair_map_info_linear_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
 
     for (size_t i=0; i < seq_vec_r1.size(); ++i){
 //        std::cout << i+1 << " of "  << seq_vec_r1.size() << std::endl;
@@ -377,13 +379,24 @@ int main(int argc, char* argv[]) {
         // linear has the reverse complement match closer to 3'
         // circ has the reverse complement match closer to 5'
         if (mapped) {
+            std::tuple<std::string, size_t, size_t, bool> pair_map_info;
             if (mapped_strand_m1){
                 // check for linear rna
                 if (mapped_loc_m < mapped_loc_m_rc){
                     ++ n_mapped_linear;
+                    pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_loc_m,
+                                                    mapped_loc_m_rc,
+                                                    mapped_strand_m1);
+                    pair_map_info_linear_vec.emplace_back(pair_map_info);
                 // check for putative circular RNA
                 } else if (mapped_loc_m > mapped_loc_m_rc){
                     ++ n_mapped_circular;
+                    pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_loc_m,
+                                                    mapped_loc_m_rc,
+                                                    mapped_strand_m1);
+                    pair_map_info_circ_vec.emplace_back(pair_map_info);
                 } else{
                     ++n_mapped_exactloc_FOOOO; // TODO remove
                 }
@@ -391,9 +404,19 @@ int main(int argc, char* argv[]) {
                 // check for linear rna
                 if (mapped_loc_m > mapped_loc_m_rc){
                     ++ n_mapped_linear;
-                    // check for putative circular RNA
+                    pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_loc_m,
+                                                    mapped_loc_m_rc,
+                                                    mapped_strand_m1);
+                    pair_map_info_linear_vec.emplace_back(pair_map_info);
+                // check for putative circular RNA
                 } else if (mapped_loc_m < mapped_loc_m_rc){
                     ++ n_mapped_circular;
+                    pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_loc_m,
+                                                    mapped_loc_m_rc,
+                                                    mapped_strand_m1);
+                    pair_map_info_circ_vec.emplace_back(pair_map_info);
                 } else{
                     ++n_mapped_exactloc_FOOOO; // TODO remove
                 }
@@ -411,6 +434,62 @@ int main(int argc, char* argv[]) {
 
     std::cout << n_mapped_linear + n_mapped_circular + n_unmapped + n_mapped_exactloc_FOOOO << std::endl;
     std::cout << seq_vec_r1.size() << std::endl;
+
+    // write output files
+    // linear
+    std::string p_out_linear = result["o"].as<std::string>();;
+    if (p_out_linear.back() == '/'){ // remove trailing slash if present
+        p_out_linear.pop_back();
+    }
+    p_out_linear = p_out_linear + "/read_map_linearRNA.csv";
+    std::cout << "Writing to " << p_out_linear << std::endl;
+    std::ofstream out_linear;
+    out_linear.open(p_out_linear);
+    out_linear << "locus" << ","
+               << "coord_m1" << ","
+               << "coorc_m2" << ","
+               << "strand" << "\n";
+    for (auto x : pair_map_info_linear_vec){
+        out_linear << std::get<0>(x) << ","
+                   << std::get<1>(x) << ","
+                   << std::get<2>(x) << ","
+                   << std::get<3>(x) << "\n";
+    }
+    out_linear.close();
+    // circRNA
+    std::string p_out_circ = result["o"].as<std::string>();
+    if (p_out_circ.back() == '/'){ // remove trailing slash if present
+        p_out_circ.pop_back();
+    }
+    p_out_circ = p_out_circ + "/read_map_circRNA.csv";
+    std::cout << "Writing to " << p_out_circ << std::endl;
+    std::ofstream out_circ;
+    out_circ.open(p_out_circ);
+    out_circ << "locus" << ","
+             << "coord_m1" << ","
+             << "coorc_m2" << ","
+             << "strand" << "\n";
+    for (auto x : pair_map_info_circ_vec){
+        out_circ << std::get<0>(x) << ","
+                 << std::get<1>(x) << ","
+                 << std::get<2>(x) << ","
+                 << std::get<3>(x) << "\n";
+    }
+    out_circ.close();
+
+
+    // TODO write read IDs as well, also contig ID
+    // TODO figure out how to report actual bsj location rather than read mapping location
+    // TODO perhaps it is best to do that in a separate step by looking at exon junctions
+
+    // TODO filter out false positives from mapping linear genome to index
+
+    // TODO filter out ribosomal RNA mapping
+
+    // TODO check if out directory exists and make it if not
+
+
+
 
     return 0;
 }

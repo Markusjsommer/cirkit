@@ -17,6 +17,8 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/tuple.hpp"
 
+#include "cereal/types/utility.hpp" // provides serialization of std::pair
+
 #include <chrono>
 #include <functional>
 #include <cstdio>
@@ -48,101 +50,6 @@ void build_index::read_ref(std::string &gtf, std::string &ref) {
     std::cout << "Reading gtf at " << gtf << std::endl;
     _gtfio.read_gtf(gtf, _gtf_lines);
 }
-
-//void build_index::extract_features(const std::string& feature, bool noalt) {
-//    // split gtf lines on tabs
-//    // gtf format
-//    // 0: contig, 1: source, 2: feature, 3: start, 4: end, 5: score, 6: strand, 7: frame, 8: geneID
-//
-//    for (auto & l : _gtf_lines){
-//        std::istringstream ss(l);
-//        std::string substring;
-//        std::tuple<std::string,
-//                   std::string,
-//                   std::string,
-//                   std::uint32_t,
-//                   std::uint32_t,
-//                   std::string,
-//                   std::string,
-//                   std::string,
-//                   std::string> row_tuple =  std::make_tuple("", "", "", 0, 0, "", "", "", "");
-//        int i = 0;
-//        while (getline(ss, substring, '\t')){
-//            // TODO replace with case switch or just avoid this entirely
-//            if (i==0){
-//                std::get<0>(row_tuple) = substring;
-//            } else if (i==1) {
-//                std::get<1>(row_tuple) = substring;
-//            } else if (i==2) {
-//                std::get<2>(row_tuple) = substring;
-//            } else if (i==3) {
-//                uint32_t x = std::stoi(substring);
-//                std::get<3>(row_tuple) = x;
-//            } else if (i==4) {
-//                uint32_t x = std::stoi(substring);
-//                std::get<4>(row_tuple) = x;
-//            } else if (i==5) {
-//                std::get<5>(row_tuple) = substring;
-//            } else if (i==6) {
-//                std::get<6>(row_tuple) = substring;
-//            } else if (i==7) {
-//                std::get<7>(row_tuple) = substring;
-//            } else if (i==8) {
-//                std::get<8>(row_tuple) = substring;
-//            }
-//            i++;
-//        }
-//
-//        // skip alt scaffolds from gtf if requested
-//        if (noalt){
-//            std::string contig;
-//            bool alt = false;
-//            contig = std::get<0>(row_tuple);
-//            if (contig.find("alt") != std::string::npos){
-//                alt = true;
-//            } else if (contig.find('_') != std::string::npos) {
-//                alt = true;
-//            }
-//            if (alt){
-//                continue;
-//            }
-//        }
-//
-//        // only keep rows with feature type matching given feature
-//        if (std::get<2>(row_tuple) == feature){
-//            _gtf_data.emplace_back(row_tuple);
-//        }
-//    }
-//
-//    // get sequence on both strands for each feature from the correct contig
-//    std::string contigname;
-//    int contigname_idx;
-//    uint32_t start;
-//    uint32_t end;
-//    std::string seq_forward;
-//    std::string seq_forwardcomplement;
-//    std::string geneID;
-//    for (auto & x: _gtf_data){
-//        contigname = std::get<0>(x);
-//        start = std::get<3>(x);
-//        end = std::get<4>(x);
-//
-//        auto it = std::find(_contigname_vec.begin(), _contigname_vec.end(), contigname);
-//        if (it == _contigname_vec.end()){
-//            std::cout << "contig " << contigname << " from annotation not found in reference fasta, consider removing alt scaffolds with --no-alt" << std::endl;
-//            continue;
-//        }
-//
-//        contigname_idx = it - _contigname_vec.begin();
-//        seq_forward = _seq_vec[contigname_idx].substr(start, end - start + 1);
-//        complement(seq_forward, seq_forwardcomplement);
-//
-//        _gtf_feature_5prime3prime.emplace_back(seq_forward);
-//        _gtf_seq_forwardcomplement.emplace_back(seq_forwardcomplement);
-//    }
-//
-//    std::cout << "Found " << _gtf_data.size() << " features..." << std::endl;
-//}
 
 void build_index::extract_features(const std::string& feature, bool noalt) {
     // gets 5' to 3' sequence of all features
@@ -197,7 +104,10 @@ void build_index::extract_features(const std::string& feature, bool noalt) {
             contig = std::get<0>(row_tuple);
             if (contig.find("alt") != std::string::npos){
                 alt = true;
-            } //else if (contig.find('_') != std::string::npos) {
+            } else if(contig.find("fix") != std::string::npos){
+                alt = true;
+            }
+            //else if (contig.find('_') != std::string::npos) {
               //  alt = true;
             //}
             if (alt){
@@ -268,7 +178,11 @@ void build_index::build(int k, int m) {
     std::string strand;
     std::string geneID;
 
+    // save intron-exon junction info to enable backsplice junction annotation
+    junction_info.reserve(_gtf_data.size());
 
+    // add all kmers to index and save gtf information
+    // TODO currently just adds kmers fully contained within exons, does not do any concatenation to allow kmers to span exon junctions
     for (uint32_t i=0; i < _gtf_data.size(); ++i){
         std::cout << i << " of " << _gtf_data.size() << std::endl;
         // insert kmer 5' to 3' on forward strand
@@ -279,6 +193,27 @@ void build_index::build(int k, int m) {
         seq_end_position = std::get<4>(_gtf_data[i]);
         strand = std::get<6>(_gtf_data[i]);
         geneID = std::get<8>(_gtf_data[i]);
+
+        // add intron-exon junction coordinates to junction_vec
+        // ensure start < end
+        std::uint32_t low;
+        std::uint32_t high;
+        if (seq_start_position < seq_end_position){
+            low = seq_start_position;
+            high = seq_end_position;
+        } else{
+            high = seq_start_position;
+            low = seq_end_position;
+        }
+        if (junction_info.find(contig) == junction_info.end()){ // add new contig
+            // initialize coordinate vector for contig
+            std::vector<std::pair<std::uint32_t, std::uint32_t>> base_case;
+            base_case.emplace_back(std::make_pair(low, high));
+            junction_info[contig] = base_case;
+
+        } else{ // add coordinates to existing contig
+            junction_info[contig].emplace_back(std::make_pair(low, high));
+        }
 
         // TODO why is anything ever generating null sequence? single nucleotide exon?
 
@@ -374,6 +309,8 @@ void build_index::serialize_table(const std::string& path_out) {
 
     archive(bm.geneID_array);
     archive(bm.contig_array);
+
+    archive(junction_info);
 }
 
 

@@ -25,6 +25,8 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/tuple.hpp"
 
+#include "cereal/types/utility.hpp" // provides serialization of std::pair
+
 #include <unordered_map>
 
 //using phmap::flat_hash_map;
@@ -47,7 +49,11 @@ private:
     using MapType = std::unordered_map<std::string, std::vector<uint64_t>>;
     MapType _table;
 
-
+    // intron-exon junction information (enables backsplice junction annotation)
+    // for each contig, stores a vector of start/end pairs from the annotated exons
+    std::unordered_map<std::string, // contig
+            std::vector<std::pair<std::uint32_t, // start coord
+                    std::uint32_t>>> junction_info; // end coord
 
 };
 

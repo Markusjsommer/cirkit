@@ -19,6 +19,12 @@ void kmer_flathash::load(const std::string& path) {
     archive_in(geneID_array);
     archive_in(contig_array);
 
+    archive_in(junction_info);
+    for(auto kv : junction_info) {
+        std::cout << kv.first << std::endl;
+        std::cout << kv.second.size() << std::endl;
+    }
+
 }
 
 bool kmer_flathash::query(const std::string& kmer, std::vector<uint64_t> &table_value) {
