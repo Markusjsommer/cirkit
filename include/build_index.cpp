@@ -256,7 +256,7 @@ void build_index::build(int k, int m) {
                 // use contig index if already added
                 contigidx = contigpos - bm.contig_array.begin();
             } else{
-                // add new geneID
+                // add new contig
                 bm.contig_array.emplace_back(contig);
                 contigidx = bm.contig_array.size() - 1; //TODO ensure not obo
             }
@@ -281,6 +281,11 @@ void build_index::build(int k, int m) {
                 kmer_hit_info_vec->emplace_back(kmer_bitset);
             }
         }
+    }
+
+    // sort all pairs in junction_info by low coordinate to allow binary search
+    for (auto &x : junction_info){
+        std::sort(x.second.begin(), x.second.end());
     }
 }
 

@@ -52,8 +52,8 @@ private:
     // intron-exon junction information (enables backsplice junction annotation)
     // for each contig, stores a vector of start/end pairs from the annotated exons
     std::unordered_map<std::string, // contig
-            std::vector<std::pair<std::uint32_t, // start coord
-                    std::uint32_t>>> junction_info; // end coord
+                       std::vector<std::pair<std::uint32_t, // start coord
+                                             std::uint32_t>>> junction_info; // end coord
 
 };
 

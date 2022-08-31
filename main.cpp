@@ -12,7 +12,7 @@
 struct compare_genevec {
     // comparison of the first value of two gene tuples
     // used to check if kmers are in the same gene locus
-    bool operator()(std::tuple<uint32_t, bool, uint32_t> a, std::tuple<uint32_t, bool, uint32_t> b) const {
+    bool operator()(std::tuple<uint32_t, uint32_t, bool, uint32_t> a, std::tuple<uint32_t, uint32_t, bool, uint32_t> b) const {
         return std::get<0>(a) == std::get<0>(b);
     };
 };
@@ -162,8 +162,8 @@ int main(int argc, char* argv[]) {
     size_t n_mapped_circular = 0;
     size_t n_unmapped = 0;
     size_t n_mapped_exactloc_FOOOO = 0; //TODO is this more than expected?
-    std::vector<std::tuple<std::string, size_t, size_t, bool>> pair_map_info_circ_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
-    std::vector<std::tuple<std::string, size_t, size_t, bool>> pair_map_info_linear_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
+    std::vector<std::tuple<std::string, std::string, size_t, size_t, bool>> pair_map_info_circ_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
+    std::vector<std::tuple<std::string, std::string, size_t, size_t, bool>> pair_map_info_linear_vec; // for mapping read pair <contig, coord r1, coord r2, strand>
 
     for (size_t i=0; i < seq_vec_r1.size(); ++i){
 //        std::cout << i+1 << " of "  << seq_vec_r1.size() << std::endl;
@@ -192,10 +192,10 @@ int main(int argc, char* argv[]) {
         bool decided = false;
         bool mapped = false;
 
-        std::vector<std::tuple<uint32_t, bool, uint32_t>> genevec_mapping_m1; // store all (geneint, strand, position) for each read to check for shared mappings
-        std::vector<std::tuple<uint32_t, bool, uint32_t>> genevec_mapping_m2;
-        std::vector<std::tuple<uint32_t, bool, uint32_t>> genevec_mapping_m1_rc;
-        std::vector<std::tuple<uint32_t, bool, uint32_t>> genevec_mapping_m2_rc;
+        std::vector<std::tuple<uint32_t, uint32_t, bool, uint32_t>> genevec_mapping_m1; // store all (geneint, contigint, strand, position) for each read to check for shared mappings
+        std::vector<std::tuple<uint32_t, uint32_t, bool, uint32_t>> genevec_mapping_m2;
+        std::vector<std::tuple<uint32_t, uint32_t, bool, uint32_t>> genevec_mapping_m1_rc;
+        std::vector<std::tuple<uint32_t, uint32_t, bool, uint32_t>> genevec_mapping_m2_rc;
 
         size_t kmer_idx_m1 = 0;
         size_t kmer_idx_m2 = 0;
@@ -210,6 +210,7 @@ int main(int argc, char* argv[]) {
         size_t mapped_loc_m;
         size_t mapped_loc_m_rc;
         std::string mapped_name;
+        std::string mapped_contig;
 
         std::vector<uint64_t> table_value;
         while (not decided){
@@ -224,9 +225,10 @@ int main(int argc, char* argv[]) {
                     // add geneIDs, strand, and position to running set for R1
                     for (uint64_t x : table_value) {
                         uint32_t geneint = bm.getbits(x, 0, 16);
+                        uint32_t contigint = bm.getbits(x, 17, 32);
                         bool strand = bm.getbits(x, 16, 17);
                         uint32_t pos = bm.getbits(x, 32, 64);
-                        std::tuple<uint32_t, bool, uint32_t> info = std::make_tuple(geneint, strand, pos);
+                        std::tuple<uint32_t, uint32_t, bool, uint32_t> info = std::make_tuple(geneint, contigint, strand, pos);
                         genevec_mapping_m1.emplace_back(info);
                     }
                 }
@@ -239,9 +241,10 @@ int main(int argc, char* argv[]) {
                     // add geneIDs, strand, and position to running set for R1
                     for (uint64_t x : table_value) {
                         uint32_t geneint = bm.getbits(x, 0, 16);
+                        uint32_t contigint = bm.getbits(x, 17, 32);
                         bool strand = bm.getbits(x, 16, 17);
                         uint32_t pos = bm.getbits(x, 32, 64);
-                        std::tuple<uint32_t, bool, uint32_t> info = std::make_tuple(geneint, strand, pos);
+                        std::tuple<uint32_t, uint32_t, bool, uint32_t> info = std::make_tuple(geneint, contigint, strand, pos);
                         genevec_mapping_m1_rc.emplace_back(info);
                     }
                 }
@@ -264,9 +267,10 @@ int main(int argc, char* argv[]) {
                     // add geneIDs to running set for R2
                     for (uint64_t x : table_value) {
                         uint32_t geneint = bm.getbits(x, 0, 16);
+                        uint32_t contigint = bm.getbits(x, 17, 32);
                         bool strand = bm.getbits(x, 16, 17);
                         uint32_t pos = bm.getbits(x, 32, 64);
-                        std::tuple<uint32_t, bool, uint32_t> info = std::make_tuple(geneint, strand, pos);
+                        std::tuple<uint32_t, uint32_t, bool, uint32_t> info = std::make_tuple(geneint, contigint, strand, pos);
                         genevec_mapping_m2.emplace_back(info);
                     }
                 }
@@ -280,9 +284,10 @@ int main(int argc, char* argv[]) {
                     // add geneIDs, strand, and position to running set for R1
                     for (uint64_t x : table_value) {
                         uint32_t geneint = bm.getbits(x, 0, 16);
+                        uint32_t contigint = bm.getbits(x, 17, 32);
                         bool strand = bm.getbits(x, 16, 17);
                         uint32_t pos = bm.getbits(x, 32, 64);
-                        std::tuple<uint32_t, bool, uint32_t> info = std::make_tuple(geneint, strand, pos);
+                        std::tuple<uint32_t, uint32_t, bool, uint32_t> info = std::make_tuple(geneint, contigint, strand, pos);
                         genevec_mapping_m2_rc.emplace_back(info);
                     }
                 }
@@ -305,7 +310,7 @@ int main(int argc, char* argv[]) {
                 if (it_m1 != genevec_mapping_m1.end()){
 
 
-                    auto it_m2_rc = std::find_if(genevec_mapping_m2_rc.begin(),  genevec_mapping_m2_rc.end(), [it_m1](std::tuple<uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1); });
+                    auto it_m2_rc = std::find_if(genevec_mapping_m2_rc.begin(),  genevec_mapping_m2_rc.end(), [it_m1](std::tuple<uint32_t, uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1); });
 
 //                    std::cout << table.geneID_array[std::get<0>(*it_m1)] << std::endl;
 //                    std::cout << std::get<1>(*it_m1) << std::endl;
@@ -316,15 +321,16 @@ int main(int argc, char* argv[]) {
 //                    std::cout << std::endl;
 
 
-                    mapped_strand_m1 = std::get<1>(*it_m1);
-                    mapped_strand_m2 = std::get<1>(*it_m2_rc);
+                    mapped_strand_m1 = std::get<2>(*it_m1);
+                    mapped_strand_m2 = std::get<2>(*it_m2_rc);
                     // ensure both hits map to same stranded feature
                     if (mapped_strand_m1 == mapped_strand_m2){
                         mapped = true;
                         decided = true;
-                        mapped_loc_m = std::get<2>(*it_m1);
-                        mapped_loc_m_rc = std::get<2>(*it_m2_rc);
+                        mapped_loc_m = std::get<3>(*it_m1);
+                        mapped_loc_m_rc = std::get<3>(*it_m2_rc);
                         mapped_name = table.geneID_array[std::get<0>(*it_m1)];
+                        mapped_contig = table.contig_array[std::get<1>(*it_m1)];
                         continue; // skip final position check to avoid false-false-mappings
                     }
                 }
@@ -338,7 +344,7 @@ int main(int argc, char* argv[]) {
                 if (it_m1_rc != genevec_mapping_m1_rc.end()){
 
 
-                    auto it_m2 = std::find_if(genevec_mapping_m2.begin(),  genevec_mapping_m2.end(), [it_m1_rc](std::tuple<uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1_rc); });
+                    auto it_m2 = std::find_if(genevec_mapping_m2.begin(),  genevec_mapping_m2.end(), [it_m1_rc](std::tuple<uint32_t, uint32_t, bool, uint32_t> const& tup){ return std::get<0>(tup) == std::get<0>(*it_m1_rc); });
 
 
 //                    std::cout << table.geneID_array[std::get<0>(*it_m1_rc)] << std::endl;
@@ -349,15 +355,16 @@ int main(int argc, char* argv[]) {
 //                    std::cout << std::get<2>(*it_m2) << std::endl;
 //                    std::cout << std::endl;
 
-                    mapped_strand_m1 = std::get<1>(*it_m1_rc);
-                    mapped_strand_m2 = std::get<1>(*it_m2);
+                    mapped_strand_m1 = std::get<2>(*it_m1_rc);
+                    mapped_strand_m2 = std::get<2>(*it_m2);
                     // ensure both hits map to same stranded feature
                     if (mapped_strand_m1 == mapped_strand_m2){
                         mapped = true;
                         decided = true;
-                        mapped_loc_m = std::get<2>(*it_m2);
-                        mapped_loc_m_rc = std::get<2>(*it_m1_rc);
+                        mapped_loc_m = std::get<3>(*it_m2);
+                        mapped_loc_m_rc = std::get<3>(*it_m1_rc);
                         mapped_name = table.geneID_array[std::get<0>(*it_m1_rc)]; // both necessarily map to same name
+                        mapped_contig = table.contig_array[std::get<1>(*it_m1_rc)];
                         continue; // skip final position check to avoid false-false-mappings
                     }
                 }
@@ -379,12 +386,13 @@ int main(int argc, char* argv[]) {
         // linear has the reverse complement match closer to 3'
         // circ has the reverse complement match closer to 5'
         if (mapped) {
-            std::tuple<std::string, size_t, size_t, bool> pair_map_info;
+            std::tuple<std::string, std::string, size_t, size_t, bool> pair_map_info;
             if (mapped_strand_m1){
                 // check for linear rna
                 if (mapped_loc_m < mapped_loc_m_rc){
                     ++ n_mapped_linear;
                     pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_contig,
                                                     mapped_loc_m,
                                                     mapped_loc_m_rc,
                                                     mapped_strand_m1);
@@ -393,6 +401,7 @@ int main(int argc, char* argv[]) {
                 } else if (mapped_loc_m > mapped_loc_m_rc){
                     ++ n_mapped_circular;
                     pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_contig,
                                                     mapped_loc_m,
                                                     mapped_loc_m_rc,
                                                     mapped_strand_m1);
@@ -405,6 +414,7 @@ int main(int argc, char* argv[]) {
                 if (mapped_loc_m > mapped_loc_m_rc){
                     ++ n_mapped_linear;
                     pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_contig,
                                                     mapped_loc_m,
                                                     mapped_loc_m_rc,
                                                     mapped_strand_m1);
@@ -413,12 +423,15 @@ int main(int argc, char* argv[]) {
                 } else if (mapped_loc_m < mapped_loc_m_rc){
                     ++ n_mapped_circular;
                     pair_map_info = std::make_tuple(mapped_name,
+                                                    mapped_contig,
                                                     mapped_loc_m,
                                                     mapped_loc_m_rc,
                                                     mapped_strand_m1);
                     pair_map_info_circ_vec.emplace_back(pair_map_info);
                 } else{
-                    ++n_mapped_exactloc_FOOOO; // TODO remove
+                    ++n_mapped_exactloc_FOOOO; // TODO figure out whether this is from linear or circular
+                    // TODO actually need to ensure start/end coords of kmers are consistent and map to linear/circ correctly here
+                    // TODO may be off by k?
                 }
             }
         } else {
@@ -445,17 +458,20 @@ int main(int argc, char* argv[]) {
     std::cout << "Writing to " << p_out_linear << std::endl;
     std::ofstream out_linear;
     out_linear.open(p_out_linear);
-    out_linear << "locus" << ","
+    out_linear << "contig" << ","
+               << "locus" << ","
                << "coord_m1" << ","
-               << "coorc_m2" << ","
+               << "coord_m2" << ","
                << "strand" << "\n";
     for (auto x : pair_map_info_linear_vec){
-        out_linear << std::get<0>(x) << ","
-                   << std::get<1>(x) << ","
+        out_linear << std::get<1>(x) << ","
+                   << std::get<0>(x) << ","
                    << std::get<2>(x) << ","
-                   << std::get<3>(x) << "\n";
+                   << std::get<3>(x) << ","
+                   << std::get<4>(x) << "\n";
     }
     out_linear.close();
+
     // circRNA
     std::string p_out_circ = result["o"].as<std::string>();
     if (p_out_circ.back() == '/'){ // remove trailing slash if present
@@ -465,17 +481,30 @@ int main(int argc, char* argv[]) {
     std::cout << "Writing to " << p_out_circ << std::endl;
     std::ofstream out_circ;
     out_circ.open(p_out_circ);
-    out_circ << "locus" << ","
+    out_circ << "contig" << ","
+             << "locus" << ","
              << "coord_m1" << ","
-             << "coorc_m2" << ","
+             << "coord_m2" << ","
              << "strand" << "\n";
     for (auto x : pair_map_info_circ_vec){
-        out_circ << std::get<0>(x) << ","
-                 << std::get<1>(x) << ","
+        out_circ << std::get<1>(x) << ","
+                 << std::get<0>(x) << ","
                  << std::get<2>(x) << ","
-                 << std::get<3>(x) << "\n";
+                 << std::get<3>(x) << ","
+                 << std::get<4>(x) << "\n";
     }
     out_circ.close();
+
+    // use junction_info to determine backsplice junction based on kmer locations
+    for (auto x : pair_map_info_circ_vec){
+        std::string contig = std::get<1>(x);
+//        sorted_exon_vec
+    }
+
+    // binary search on first coord of junction_info pair
+
+
+
 
 
     // TODO write read IDs as well, also contig ID
