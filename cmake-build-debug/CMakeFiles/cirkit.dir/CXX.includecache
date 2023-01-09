@@ -232,6 +232,12 @@ cereal/types/concepts/pair_associative_container.hpp
 unordered_map
 -
 
+../include/cereal/types/utility.hpp
+cereal/cereal.hpp
+../include/cereal/types/cereal/cereal.hpp
+utility
+-
+
 ../include/cereal/types/vector.hpp
 cereal/cereal.hpp
 ../include/cereal/types/cereal/cereal.hpp
@@ -327,6 +333,8 @@ cereal/types/string.hpp
 ../include/cereal/types/string.hpp
 cereal/types/tuple.hpp
 ../include/cereal/types/tuple.hpp
+cereal/types/utility.hpp
+../include/cereal/types/utility.hpp
 unordered_map
 -
 
@@ -413,6 +421,8 @@ cereal/types/string.hpp
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/string.hpp
 cereal/types/tuple.hpp
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/tuple.hpp
+cereal/types/utility.hpp
+/tmp/tmp.SEBJEAnaQR/include/cereal/types/utility.hpp
 chrono
 -
 functional
@@ -482,6 +492,12 @@ cereal/types/concepts/pair_associative_container.hpp
 unordered_map
 -
 
+/tmp/tmp.SEBJEAnaQR/include/cereal/types/utility.hpp
+cereal/cereal.hpp
+/tmp/tmp.SEBJEAnaQR/include/cereal/types/cereal/cereal.hpp
+utility
+-
+
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/vector.hpp
 cereal/cereal.hpp
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/cereal/cereal.hpp
@@ -519,6 +535,8 @@ cereal/types/string.hpp
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/string.hpp
 cereal/types/tuple.hpp
 /tmp/tmp.SEBJEAnaQR/include/cereal/types/tuple.hpp
+cereal/types/utility.hpp
+/tmp/tmp.SEBJEAnaQR/include/cereal/types/utility.hpp
 unordered_map
 -
 

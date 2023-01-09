@@ -45,15 +45,17 @@ public:
     std::vector<std::string> contig_array;
     std::vector<std::string> geneID_array;
 
+    // intron-exon junction information (enables backsplice junction annotation)
+    // for each contig, stores a vector of start/end pairs from the annotated exons
+    std::unordered_map<std::string, // contig
+            std::vector<std::pair<std::uint32_t, // start coord
+                    std::uint32_t>>> junction_info; // end coord
+
 private:
     using MapType = std::unordered_map<std::string, std::vector<uint64_t>>;
     MapType _table;
 
-    // intron-exon junction information (enables backsplice junction annotation)
-    // for each contig, stores a vector of start/end pairs from the annotated exons
-    std::unordered_map<std::string, // contig
-                       std::vector<std::pair<std::uint32_t, // start coord
-                                             std::uint32_t>>> junction_info; // end coord
+
 
 };
 

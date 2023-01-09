@@ -20,7 +20,7 @@ void kmer_flathash::load(const std::string& path) {
     archive_in(contig_array);
 
     archive_in(junction_info);
-    for(auto kv : junction_info) {
+    for(auto kv : junction_info) { // TODO tidy reporting
         std::cout << kv.first << std::endl;
         std::cout << kv.second.size() << std::endl;
     }

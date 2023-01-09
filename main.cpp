@@ -454,7 +454,7 @@ int main(int argc, char* argv[]) {
     if (p_out_linear.back() == '/'){ // remove trailing slash if present
         p_out_linear.pop_back();
     }
-    p_out_linear = p_out_linear + "/read_map_linearRNA.csv";
+    p_out_linear = p_out_linear + "/read_kmer_map_linearRNA.csv";
     std::cout << "Writing to " << p_out_linear << std::endl;
     std::ofstream out_linear;
     out_linear.open(p_out_linear);
@@ -477,7 +477,7 @@ int main(int argc, char* argv[]) {
     if (p_out_circ.back() == '/'){ // remove trailing slash if present
         p_out_circ.pop_back();
     }
-    p_out_circ = p_out_circ + "/read_map_circRNA.csv";
+    p_out_circ = p_out_circ + "/read_kmer_map_circRNA.csv";
     std::cout << "Writing to " << p_out_circ << std::endl;
     std::ofstream out_circ;
     out_circ.open(p_out_circ);
@@ -496,12 +496,83 @@ int main(int argc, char* argv[]) {
     out_circ.close();
 
     // use junction_info to determine backsplice junction based on kmer locations
+    std::unordered_map<std::string, // contig
+                       std::vector<std::pair<std::uint32_t, // start coord
+                                             std::uint32_t>>> *junction_info = &table.junction_info; // end coord
+    std::map<std::string, int> bsj_counter; // keeps track of how many read pairs support each bsj
     for (auto x : pair_map_info_circ_vec){
-        std::string contig = std::get<1>(x);
-//        sorted_exon_vec
+        std::string contig = std::get<1>(x); // get contig name
+        std::uint32_t kmer_coord_m1 = std::get<2>(x);
+        std::uint32_t kmer_coord_m2 = std::get<3>(x);
+        std::uint32_t kmer_coord_low;
+        std::uint32_t kmer_coord_high;
+        if (kmer_coord_m1 < kmer_coord_m2){
+            kmer_coord_low = kmer_coord_m1;
+            kmer_coord_high = kmer_coord_m2;
+        } else{
+            kmer_coord_high = kmer_coord_m1;
+            kmer_coord_low = kmer_coord_m2;
+        }
+        std::vector<std::pair<std::uint32_t, std::uint32_t>> *contig_exon_vec = &((*junction_info)[contig]); // get exon coord vector of contig
+
+        // bsj is a splice between the first exon junction below kmer_coord_low and above kmer_coord_high
+        auto it_low = std::lower_bound(contig_exon_vec -> begin(), contig_exon_vec -> end(), kmer_coord_low,
+                                       [](const std::pair<std::uint32_t, std::uint32_t> coordpair, std::uint32_t coord){
+                                            return coordpair.first < coord; // compare lower exon bound
+                                       });
+        std::uint32_t bsj_coord_low;
+        if (it_low != (*contig_exon_vec).end()){
+            bsj_coord_low = (*contig_exon_vec)[(it_low - (*contig_exon_vec).begin())].first;
+        } else{
+            bsj_coord_low = (*contig_exon_vec)[0].first; // edge case of kmer in first exon of contig
+        }
+
+//        auto it_high = std::upper_bound(contig_exon_vec -> begin(), contig_exon_vec -> end(), kmer_coord_high,
+//                                        [](const std::pair<std::uint32_t, std::uint32_t> coordpair, std::uint32_t coord){
+//                                            return coordpair.second < coord; // compare upper exon bound
+//                                        });
+        auto it_high = std::upper_bound(contig_exon_vec -> begin(), contig_exon_vec -> end(), kmer_coord_high,
+                                        [](const std::uint32_t coord, std::pair<std::uint32_t, std::uint32_t> coordpair){
+                                            return coord < coordpair.second; // compare upper exon bound
+                                        });
+
+        std::uint32_t bsj_coord_high;
+        if (it_high != (*contig_exon_vec).end()){
+            bsj_coord_high = (*contig_exon_vec)[(it_high - (*contig_exon_vec).begin())].second;
+        } else{
+            bsj_coord_high = (*contig_exon_vec).back().second; // edge case of kmer in last exon of contig
+        }
+
+        // add bsj to bsj_counter
+        std::string bsj_info;
+        bsj_info += contig;
+        bsj_info += ":";
+        bsj_info += std::to_string(bsj_coord_low);
+        bsj_info += "|"; // I would prefer a "-" here to be consistent with IGV, but CIRI uses "|"
+        bsj_info += std::to_string(bsj_coord_high);
+        if (bsj_counter.find(bsj_info) != bsj_counter.end()){
+            bsj_counter[bsj_info] += 1;
+        } else{
+            bsj_counter[bsj_info] = 1;
+        }
     }
 
-    // binary search on first coord of junction_info pair
+    // write bsj info to file
+    std::string p_out_bsj = result["o"].as<std::string>();;
+    if (p_out_bsj.back() == '/'){ // remove trailing slash if present
+        p_out_bsj.pop_back();
+    }
+    p_out_bsj = p_out_bsj + "/circRNA_bsj.csv";
+    std::cout << "Writing to " << p_out_bsj << std::endl;
+    std::ofstream out_bsj;
+    out_bsj.open(p_out_bsj);
+    out_bsj << "circRNA_bsj"  << ",";
+    out_bsj << "n_supporting_read_pairs"  << "\n";
+
+    for (auto &x : bsj_counter){
+        out_bsj << x.first << "," << x.second << "\n";
+    }
+
 
 
 
@@ -516,6 +587,11 @@ int main(int argc, char* argv[]) {
     // TODO filter out ribosomal RNA mapping
 
     // TODO check if out directory exists and make it if not
+
+
+    // TODO overlapping exons of alternate lengths may produce bsj's that are not reported consistently
+    // TODO may result in some weird noisy exon reducing counts that could have gone to a valid bsj
+    // TODO could alleviate this by always choosing the longest exon at any given position
 
 
 
